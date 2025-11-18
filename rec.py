@@ -1,16 +1,15 @@
 import sys
+import json
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
-from rich.table import Table
 
 console = Console()
 
 def limpar_texto(texto):
-    """Remove caracteres especiais e espaços extras."""
     if not texto:
         return ""
     return (
@@ -20,109 +19,151 @@ def limpar_texto(texto):
         .strip()
     )
 
+
+def eh_noticia_valida(url):
+    if url.endswith("/noticias/"):
+        return False
+    if "/categoria/" in url:
+        return False
+    if "/tag/" in url:
+        return False
+    if "/o-ifpe/" in url and "/noticias/" not in url:
+        return False
+    if "/noticias/" in url and url.count("/") >= 5:
+        return True
+    return False
+
+
 def extrair_informacoes(url):
     resposta = requests.get(url)
     resposta.raise_for_status()
 
     soup = BeautifulSoup(resposta.text, 'lxml')
 
-    titulo = soup.find('h1') or soup.find('title')
-    titulo = titulo.get_text(strip=True) if titulo else "Sem título"
+    titulo = None
 
-    publicado = soup.find('span', class_='post__published')
+    og = soup.find("meta", property="og:title")
+    if og and og.get("content"):
+        titulo = og["content"].strip()
+
+    if not titulo:
+        h1 = soup.find("h1", class_="post__title")
+        if h1:
+            titulo = h1.get_text(strip=True)
+
+    if not titulo:
+        h1_old = soup.find("h1", class_="documentFirstHeading")
+        if h1_old:
+            titulo = h1_old.get_text(strip=True)
+
+    if not titulo:
+        titulo = soup.find("title").get_text(strip=True) if soup.find("title") else "Sem título"
+
+
+    publicado = soup.find("span", class_="post__published")
     if not publicado:
-        publicado = soup.find(string=lambda s: s and "Publicado" in s)
-    publicado = publicado.get_text(strip=True) if hasattr(publicado, 'get_text') else (publicado or "Data de publicação não encontrada")
+        publicado = soup.find(string=lambda s: s and "publicado" in s.lower())
 
-    modificado = soup.find('span', class_='post__updated')
+    publicado = publicado.get_text(strip=True) if hasattr(publicado, "get_text") else "Data não encontrada"
+
+    modificado = soup.find("span", class_="post__updated")
     if not modificado:
-        modificado = soup.find(string=lambda s: s and "última modificação" in s.lower())
-    modificado = modificado.get_text(strip=True) if hasattr(modificado, 'get_text') else (modificado or "Data de modificação não encontrada")
+        modificado = soup.find(string=lambda s: s and "modifica" in s.lower())
+
+    modificado = modificado.get_text(strip=True) if hasattr(modificado, "get_text") else "Data não encontrada"
+
 
     corpo = soup.find('div', class_='post__content')
-    
     if corpo and corpo.find('p'):
         texto = corpo.find('p').get_text(strip=True)
     else:
-        texto = "Conteúdo não encontrado"
+        p = soup.find("p")
+        texto = p.get_text(strip=True) if p else "Conteúdo não encontrado"
 
+   
     links_especificos = []
     links_gerais = []
 
     for a in soup.find_all('a', href=True):
         href = urljoin(url, a['href'])
-        if not href.startswith("http"):
+        texto_link = limpar_texto(a.get_text(" ", strip=True))
+        if len(texto_link) < 3:
             continue
 
-        texto_link = a.get_text(" ", strip=True)
-        if not texto_link:
-            continue
-
-        texto_limpo = limpar_texto(texto_link)
-        if len(texto_limpo) < 3:
-            continue
-
-        dentro_do_texto = a.find_parent('p') or a.find_parent('strong')
-
-        if dentro_do_texto:
-            links_especificos.append({
-                'texto': texto_limpo,
-                'url': href
-            })
+        if a.find_parent('p') or a.find_parent('strong'):
+            links_especificos.append({"texto": texto_link, "url": href})
         else:
-            links_gerais.append({
-                'texto': texto_limpo,
-                'url': href
-            })
+            links_gerais.append({"texto": texto_link, "url": href})
 
     return {
-        'url': url,
-        'titulo': titulo,
-        'publicado': publicado,
-        'modificado': modificado,
-        'texto': texto[:800] + '...' if len(texto) > 800 else texto,
-        'links_especificos': links_especificos,
-        'links_gerais': links_gerais
+        "url": url,
+        "titulo": titulo,
+        "publicado": publicado,
+        "modificado": modificado,
+        "texto": texto[:800] + "..." if len(texto) > 800 else texto,
+        "links_especificos": links_especificos,
+        "links_gerais": links_gerais
     }
 
+
+def listar_links_de_noticias(url):
+    resposta = requests.get(url)
+    resposta.raise_for_status()
+
+    soup = BeautifulSoup(resposta.text, 'lxml')
+    links = []
+
+    for a in soup.find_all('a', href=True):
+        href = urljoin(url, a['href'])
+        if eh_noticia_valida(href):
+            links.append(href)
+
+    return list(dict.fromkeys(links))  # remove duplicados
+
+
+def gerar_urls_paginas(base_url, total_paginas):
+    return [f"{base_url}?b_start:int={pagina * 15}" for pagina in range(total_paginas)]
+
+
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        url = sys.argv[1]
-    else:
-        url = "https://portal.ifpe.edu.br/noticias/divulgado-resultado-final-das-candidaturas-a-cppd/"
 
-    info = extrair_informacoes(url)
+    base = "https://portal.ifpe.edu.br/noticias"
+    total_paginas = 5
 
-    console.rule("[bold green]🔍 INFORMAÇÕES EXTRAÍDAS DO IFPE")
+    paginas = gerar_urls_paginas(base, total_paginas)
+    todas_noticias = []
 
-    console.print(Panel(Text(info['titulo'], justify="center", style="bold yellow"), title="📰 TÍTULO"))
+    for pagina in paginas:
+        console.rule(f"[bold green]📄 Lendo página: {pagina}")
 
-    console.print(f"[bold cyan]📅 Publicado:[/bold cyan] {info['publicado']}")
-    console.print(f"[bold cyan]🕓 Última modificação:[/bold cyan] {info['modificado']}")
-    console.print(f"[bold cyan]🔗 URL:[/bold cyan] {info['url']}\n")
+        noticias = listar_links_de_noticias(pagina)
 
-    console.print(Panel(info['texto'], title="📄 CONTEÚDO (Resumo)", subtitle="(até 800 caracteres)", expand=False))
+        if not noticias:
+            console.print("[yellow]Nenhuma notícia encontrada nessa página.[/yellow]")
+            continue
 
-    if info['links_especificos']:
-        tabela = Table(title="🎯 LINKS ESPECÍFICOS (no texto da notícia)", show_header=True, header_style="bold green")
-        tabela.add_column("Nº", justify="right")
-        tabela.add_column("Texto")
-        tabela.add_column("URL")
-        for i, link in enumerate(info['links_especificos'], start=1):
-            tabela.add_row(str(i), link['texto'], link['url'])
-        console.print(tabela)
-    else:
-        console.print("[yellow]Nenhum link específico encontrado no corpo da notícia.[/yellow]")
+        for link in noticias:
+            console.rule(f"[bold cyan]🔗 Notícia: {link}")
 
-    if info['links_gerais']:
-        tabela = Table(title="🔗 LINKS GERAIS DO PORTAL", show_header=True, header_style="bold magenta")
-        tabela.add_column("Nº", justify="right")
-        tabela.add_column("Texto")
-        tabela.add_column("URL")
-        for i, link in enumerate(info['links_gerais'][:10], start=1):
-            tabela.add_row(str(i), link['texto'], link['url'])
-        console.print(tabela)
-    else:
-        console.print("[yellow]Nenhum link geral encontrado.[/yellow]")
+            try:
+                info = extrair_informacoes(link)
+            except Exception as e:
+                console.print(f"[red]Erro ao ler notícia: {e}[/red]")
+                continue
 
-    console.rule("[green]✅ Fim da extração")
+            todas_noticias.append(info)
+
+            console.print(Panel(
+                Text(info['titulo'], justify="center", style="bold yellow"),
+                title="📰 TÍTULO"
+            ))
+            console.print(f"[cyan]Publicado:[/cyan] {info['publicado']}")
+            console.print(f"[cyan]Modificado:[/cyan] {info['modificado']}")
+            console.print(f"[cyan]URL:[/cyan] {info['url']}")
+            console.print(Panel(info['texto'], title="📄 Resumo", expand=False))
+
+    # Salvar JSON final
+    with open("noticias.json", "w", encoding="utf-8") as f:
+        json.dump(todas_noticias, f, ensure_ascii=False, indent=4)
+
+    console.rule("[bold green]🏁 Coleta concluída — notícias salvas em noticias.json")
