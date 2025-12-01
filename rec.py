@@ -63,13 +63,12 @@ def extrair_informacoes(url):
     publicado = soup.find("span", class_="post__published")
     if not publicado:
         publicado = soup.find(string=lambda s: s and "publicado" in s.lower())
-
     publicado = publicado.get_text(strip=True) if hasattr(publicado, "get_text") else "Data não encontrada"
+
 
     modificado = soup.find("span", class_="post__updated")
     if not modificado:
         modificado = soup.find(string=lambda s: s and "modifica" in s.lower())
-
     modificado = modificado.get_text(strip=True) if hasattr(modificado, "get_text") else "Data não encontrada"
 
 
@@ -80,29 +79,13 @@ def extrair_informacoes(url):
         p = soup.find("p")
         texto = p.get_text(strip=True) if p else "Conteúdo não encontrado"
 
-   
-    links_especificos = []
-    links_gerais = []
-
-    for a in soup.find_all('a', href=True):
-        href = urljoin(url, a['href'])
-        texto_link = limpar_texto(a.get_text(" ", strip=True))
-        if len(texto_link) < 3:
-            continue
-
-        if a.find_parent('p') or a.find_parent('strong'):
-            links_especificos.append({"texto": texto_link, "url": href})
-        else:
-            links_gerais.append({"texto": texto_link, "url": href})
 
     return {
         "url": url,
         "titulo": titulo,
         "publicado": publicado,
         "modificado": modificado,
-        "texto": texto[:800] + "..." if len(texto) > 800 else texto,
-        "links_especificos": links_especificos,
-        "links_gerais": links_gerais
+        "texto": texto[:800] + "..." if len(texto) > 800 else texto
     }
 
 
@@ -118,7 +101,7 @@ def listar_links_de_noticias(url):
         if eh_noticia_valida(href):
             links.append(href)
 
-    return list(dict.fromkeys(links))  # remove duplicados
+    return list(dict.fromkeys(links))  
 
 
 def gerar_urls_paginas(base_url, total_paginas):
@@ -162,8 +145,19 @@ if __name__ == "__main__":
             console.print(f"[cyan]URL:[/cyan] {info['url']}")
             console.print(Panel(info['texto'], title="📄 Resumo", expand=False))
 
-    # Salvar JSON final
-    with open("noticias.json", "w", encoding="utf-8") as f:
-        json.dump(todas_noticias, f, ensure_ascii=False, indent=4)
 
-    console.rule("[bold green]🏁 Coleta concluída — notícias salvas em noticias.json")
+    console.rule(f"[bold green]📦 Total de notícias coletadas: {len(todas_noticias)}")
+
+
+    
+    noticias_indexadas = []
+    for i, item in enumerate(todas_noticias):
+        item_com_index = {"index": i}
+        item_com_index.update(item)
+        noticias_indexadas.append(item_com_index)
+
+
+    with open("noticias.json", "w", encoding="utf-8") as f:
+        json.dump(noticias_indexadas, f, ensure_ascii=False, indent=4)
+
+    console.rule("[bold green]🏁 Coleta concluída — noticias.json com INDEX incluído")
