@@ -9,29 +9,56 @@ from rich.text import Text
 
 console = Console()
 
-def limpar_texto(texto):
-    if not texto:
-        return ""
-    return (
-        texto.replace('\xa0', ' ')
-        .replace('&nbsp;', ' ')
-        .replace('>>>', '')
-        .strip()
-    )
+# Não está sendo utilizada
 
+# def limpar_texto(texto):
+#     if not texto:
+#         return ""
+#     return (
+#         texto.replace('\xa0', ' ')
+#         .replace('&nbsp;', ' ')
+#         .replace('>>>', '')
+#         .strip()
+#     )
+
+
+# def eh_noticia_valida(url):
+#     if url.endswith("/noticias/"):
+#         return False
+#     if "/categoria/" in url:
+#         return False
+#     if "/tag/" in url:
+#         return False
+#     if "/o-ifpe/" in url and "/noticias/" not in url:
+#         return False
+#     if "/noticias/" in url and url.count("/") >= 5:
+#         return True
+#     return False
 
 def eh_noticia_valida(url):
+
+    # ignora âncoras internas
+    if "#" in url:
+        return False
+
+    # ignora listagem geral
     if url.endswith("/noticias/"):
         return False
-    if "/categoria/" in url:
+
+    # ignora páginas de paginação
+    if "/noticias/page/" in url:
         return False
-    if "/tag/" in url:
+
+    # ignora categorias e tags
+    if "/categoria/" in url or "/tag/" in url:
         return False
-    if "/o-ifpe/" in url and "/noticias/" not in url:
-        return False
+
+    # aceita apenas URLs de notícias individuais
     if "/noticias/" in url and url.count("/") >= 5:
         return True
+
     return False
+
 
 
 def extrair_informacoes(url):
@@ -79,6 +106,9 @@ def extrair_informacoes(url):
         p = soup.find("p")
         texto = p.get_text(strip=True) if p else "Conteúdo não encontrado"
 
+    # paragrafos = corpo.find_all('p')
+    # texto = " ".join(p.get_text(strip=True) for p in paragrafos)
+
 
     return {
         "url": url,
@@ -104,8 +134,12 @@ def listar_links_de_noticias(url):
     return list(dict.fromkeys(links))  
 
 
+# def gerar_urls_paginas(base_url, total_paginas):
+#     return [f"{base_url}?b_start:int={pagina * 15}" for pagina in range(total_paginas)]
+
 def gerar_urls_paginas(base_url, total_paginas):
-    return [f"{base_url}?b_start:int={pagina * 15}" for pagina in range(total_paginas)]
+    return [f"{base_url}/page/{pagina}" for pagina in range(1, total_paginas + 1)]
+
 
 
 if __name__ == "__main__":
@@ -134,6 +168,9 @@ if __name__ == "__main__":
                 console.print(f"[red]Erro ao ler notícia: {e}[/red]")
                 continue
 
+            if info in todas_noticias:
+                console.print("[yellow]Notícia já coletada anteriormente. Pulando...[/yellow]")
+                continue
             todas_noticias.append(info)
 
             console.print(Panel(
