@@ -145,7 +145,7 @@ def gerar_urls_paginas(base_url, total_paginas):
 if __name__ == "__main__":
 
     base = "https://portal.ifpe.edu.br/noticias"
-    total_paginas = 5
+    total_paginas = 20
 
     paginas = gerar_urls_paginas(base, total_paginas)
     todas_noticias = []

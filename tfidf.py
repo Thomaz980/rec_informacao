@@ -36,7 +36,7 @@ vetor_pergunta = vectorizer.transform([pergunta])
 similaridades = cosine_similarity(vetor_pergunta, tfidf_matrix)[0]
 
 # Ordenar as notícias pela similaridade (do mais relevante para o menos)
-top_k = 3
+top_k = 5
 indices = np.argsort(similaridades)[::-1][:top_k]
 
 
