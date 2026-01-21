@@ -6,6 +6,7 @@ from urllib.parse import urljoin
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
+from unidecode import unidecode
 
 console = Console()
 
@@ -71,21 +72,28 @@ def extrair_informacoes(url):
 
     og = soup.find("meta", property="og:title")
     if og and og.get("content"):
-        titulo = og["content"].strip()
+        titulo_sujo = og["content"].strip()
+        titulo_sem_acento = unidecode(titulo_sujo)
+        titulo = titulo_sem_acento.lower()
 
     if not titulo:
         h1 = soup.find("h1", class_="post__title")
         if h1:
-            titulo = h1.get_text(strip=True)
+            titulo_sujo = h1.get_text(strip=True)
+            titulo_sem_acento = unidecode(titulo_sujo)
+            titulo = titulo_sem_acento.lower()
 
     if not titulo:
         h1_old = soup.find("h1", class_="documentFirstHeading")
         if h1_old:
-            titulo = h1_old.get_text(strip=True)
+            titulo_sujo = h1_old.get_text(strip=True)
+            titulo_sem_acento = unidecode(titulo_sujo)
+            titulo = titulo_sem_acento.lower()
 
     if not titulo:
-        titulo = soup.find("title").get_text(strip=True) if soup.find("title") else "Sem título"
-
+        titulo_sujo = soup.find("title").get_text(strip=True) if soup.find("title") else "Sem título"
+        titulo_sem_acento = unidecode(titulo_sujo)
+        titulo = titulo_sem_acento.lower()
 
     publicado = soup.find("span", class_="post__published")
     if not publicado:
@@ -101,7 +109,9 @@ def extrair_informacoes(url):
 
     corpo = soup.find('div', class_='post__content')
     if corpo and corpo.find('p'):
-        texto = corpo.find('p').get_text(strip=True)
+        texto_sujo = corpo.find('p').get_text(strip=True)
+        texto_sem_acento = unidecode(texto_sujo)
+        texto = texto_sem_acento.lower()
     else:
         p = soup.find("p")
         texto = p.get_text(strip=True) if p else "Conteúdo não encontrado"
@@ -145,7 +155,7 @@ def gerar_urls_paginas(base_url, total_paginas):
 if __name__ == "__main__":
 
     base = "https://portal.ifpe.edu.br/noticias"
-    total_paginas = 20
+    total_paginas = 20 # MEXA AQUI PARA COLETAR MAIS PAGINAS E NOTICIAS EX: 100
 
     paginas = gerar_urls_paginas(base, total_paginas)
     todas_noticias = []
