@@ -1,4 +1,5 @@
 import json
+import os
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
@@ -15,7 +16,8 @@ from nltk.corpus import stopwords
 
 stop_words_pt = stopwords.words("portuguese")
 
-with open("noticias.json", encoding="utf-8") as f:
+noticias_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), "noticias.json")
+with open(noticias_file, encoding="utf-8") as f:
     noticias = json.load(f)
 
 corpus = [
@@ -47,3 +49,4 @@ for i in indices:
     print("URL:", noticias[i]["url"])
     print("Score de Similaridade:", round(similaridades[i], 3))
     print("Trecho:", noticias[i]["texto"][:300], "...")  # Exibindo um resumo
+

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IFPE - Busca de Notícias</title>
+    <link rel="icon" type="image/png" href="rec-infor.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="logo-text">IFPE</h1>
+        </header>
+
+        <main>
+            <div class="search-container">
+                <div class="search-box-wrapper">
+                    <input 
+                        type="text" 
+                        class="search-box" 
+                        id="searchInput" 
+                        placeholder="Pesquise sobre notícias do IFPE..."
+                        autocomplete="off"
+                    >
+                    <button class="clear-icon hidden" id="clearButton" type="button" aria-label="Limpar busca">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                    <button class="search-icon" id="searchButton" type="button" aria-label="Buscar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="results-wrapper" id="resultsWrapper" style="display: none;">
+                <div class="results-layout">
+                    <div class="results-left">
+                        <div class="ai-response-container">
+                            <div class="ai-header">
+                                <span class="ai-badge">Visão geral criada por IA</span>
+                            </div>
+                            <div class="ai-content" id="aiContent"></div>
+                        </div>
+                    </div>
+                    <div class="results-right">
+                        <div class="results-info" id="resultsInfo"></div>
+                        <div class="results-list" id="resultsList"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Projeto desenvolvido para a disciplina de Recuperação de Informação</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+

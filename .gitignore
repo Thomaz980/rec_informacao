@@ -1,0 +1,32 @@
+# Arquivos de ambiente e chaves de API
+.env
+.env.local
+.env.*
+*_key.txt
+*_api_key.txt
+config.py
+secrets.py
+
+# Arquivos com chaves (não commitar!)
+**/api_keys.txt
+**/secrets.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema
+.DS_Store
+Thumbs.db
