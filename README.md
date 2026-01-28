@@ -225,29 +225,22 @@ total_paginas = 20  # Altere para coletar mais ou menos páginas
 - A primeira execução pode demorar um pouco para baixar os recursos do NLTK
 - Os resultados são baseados na similaridade textual, não em busca semântica avançada
 
-## 🤝 Contribuindo
-
-Sinta-se à vontade para:
-- Reportar bugs
-- Sugerir melhorias
-- Fazer fork e pull requests
 
 ## 📄 Licença
 Este projeto é de código aberto para fins educacionais.
 
 ## 👨‍💻 Autores
-**Andrey Mafra**
-* GitHub: [@andreymafra55](https://github.com/andreymafra55)
-**Caio Rodrigues**
-* GitHub: [@caiordm](https://github.com/caiordm)
-**Polyana Gisele**
-* GitHub: [@Polyalves2](https://github.com/Polyalves2)
-**Thomaz Rodrigues**
-* GitHub: [@Thomaz980](https://github.com/Thomaz980)
-**Victor Antônio**
-* GitHub: [@VictorLemos1000](https://github.com/VictorLemos1000)
-**Williane Felix**
-* GitHub: [@willyfelix](https://github.com/willyfelix)
+**Andrey Mafra** - [@andreymafra55](https://github.com/andreymafra55)
+
+**Caio Rodrigues** - [@caiordm](https://github.com/caiordm)
+
+**Polyana Gisele** - [@Polyalves2](https://github.com/Polyalves2)
+
+**Thomaz Rodrigues** - [@Thomaz980](https://github.com/Thomaz980)
+
+**Victor Antônio** - [@VictorLemos1000](https://github.com/VictorLemos1000)
+
+**Williane Felix** - [@willyfelix](https://github.com/willyfelix)
 
 ---
 **Projeto desenvolvido para a disciplina de Recuperação de Informação**
