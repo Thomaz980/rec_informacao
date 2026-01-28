@@ -1,5 +1,6 @@
 import sys
 import json
+import os
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
@@ -9,32 +10,6 @@ from rich.text import Text
 from unidecode import unidecode
 
 console = Console()
-
-# Não está sendo utilizada
-
-# def limpar_texto(texto):
-#     if not texto:
-#         return ""
-#     return (
-#         texto.replace('\xa0', ' ')
-#         .replace('&nbsp;', ' ')
-#         .replace('>>>', '')
-#         .strip()
-#     )
-
-
-# def eh_noticia_valida(url):
-#     if url.endswith("/noticias/"):
-#         return False
-#     if "/categoria/" in url:
-#         return False
-#     if "/tag/" in url:
-#         return False
-#     if "/o-ifpe/" in url and "/noticias/" not in url:
-#         return False
-#     if "/noticias/" in url and url.count("/") >= 5:
-#         return True
-#     return False
 
 def eh_noticia_valida(url):
 
@@ -54,8 +29,8 @@ def eh_noticia_valida(url):
     if "/categoria/" in url or "/tag/" in url:
         return False
 
-    # aceita apenas URLs de notícias individuais
-    if "/noticias/" in url and url.count("/") >= 5:
+    # aceita apenas URLs de notícias individuais do campus Igarassu
+    if "/igarassu/noticias/" in url and url.count("/") >= 6:
         return True
 
     return False
@@ -116,10 +91,6 @@ def extrair_informacoes(url):
         p = soup.find("p")
         texto = p.get_text(strip=True) if p else "Conteúdo não encontrado"
 
-    # paragrafos = corpo.find_all('p')
-    # texto = " ".join(p.get_text(strip=True) for p in paragrafos)
-
-
     return {
         "url": url,
         "titulo": titulo,
@@ -144,9 +115,6 @@ def listar_links_de_noticias(url):
     return list(dict.fromkeys(links))  
 
 
-# def gerar_urls_paginas(base_url, total_paginas):
-#     return [f"{base_url}?b_start:int={pagina * 15}" for pagina in range(total_paginas)]
-
 def gerar_urls_paginas(base_url, total_paginas):
     return [f"{base_url}/page/{pagina}" for pagina in range(1, total_paginas + 1)]
 
@@ -154,7 +122,7 @@ def gerar_urls_paginas(base_url, total_paginas):
 
 if __name__ == "__main__":
 
-    base = "https://portal.ifpe.edu.br/noticias"
+    base = "https://portal.ifpe.edu.br/igarassu/noticias"
     total_paginas = 20 # MEXA AQUI PARA COLETAR MAIS PAGINAS E NOTICIAS EX: 100
 
     paginas = gerar_urls_paginas(base, total_paginas)
@@ -195,7 +163,6 @@ if __name__ == "__main__":
 
     console.rule(f"[bold green]📦 Total de notícias coletadas: {len(todas_noticias)}")
 
-
     
     noticias_indexadas = []
     for i, item in enumerate(todas_noticias):
@@ -203,8 +170,9 @@ if __name__ == "__main__":
         item_com_index.update(item)
         noticias_indexadas.append(item_com_index)
 
-
-    with open("noticias.json", "w", encoding="utf-8") as f:
+    noticias_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), "noticias.json")
+    with open(noticias_file, "w", encoding="utf-8") as f:
         json.dump(noticias_indexadas, f, ensure_ascii=False, indent=4)
 
     console.rule("[bold green]🏁 Coleta concluída — noticias.json com INDEX incluído")
+
